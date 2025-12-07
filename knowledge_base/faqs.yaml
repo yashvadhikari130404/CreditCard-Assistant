@@ -1,0 +1,24 @@
+- id: faq_001
+  category: "Account & Onboarding"
+  question: "What documents are required to apply for a credit card?"
+  answer: "You need a government ID, proof of address, and proof of income such as salary slips or bank statements."
+
+- id: faq_002
+  category: "Card Delivery"
+  question: "How long does it take to receive my credit card?"
+  answer: "Physical card delivery usually takes 5–7 business days after your application is approved."
+
+- id: faq_003
+  category: "Bill & Statement"
+  question: "How can I view my credit card statement?"
+  answer: "You can view your statement in the mobile app under 'Statements' or via the monthly email we send."
+
+- id: faq_004
+  category: "Repayments"
+  question: "What are the different ways to pay my credit card bill?"
+  answer: "You can pay via net banking, UPI, auto-debit, or through our app's 'Pay Now' option."
+
+- id: faq_005
+  category: "Collections"
+  question: "I missed my payment. What should I do?"
+  answer: "You should pay at least the minimum amount due as soon as possible. You can also contact support to discuss a payment plan."

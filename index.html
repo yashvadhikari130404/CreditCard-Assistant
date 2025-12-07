@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Credit Card Assistant · Stealth Console</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #030712;
+      --bg-elevated: rgba(15,23,42,0.85);
+      --accent: #22c55e;
+      --accent-soft: rgba(34,197,94,0.25);
+      --accent-strong: #4ade80;
+      --danger: #f97373;
+      --border-subtle: rgba(148,163,184,0.18);
+      --text-main: #e5e7eb;
+      --text-muted: #6b7280;
+      --user-bubble: #0f172a;
+      --assistant-bubble: #020617;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Mono", "Fira Code", monospace;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, #1f2933 0, #020617 45%, #000000 100%);
+      color: var(--text-main);
+      overflow: hidden;
+    }
+
+    .halo {
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(34,197,94,0.28), transparent 60%);
+      filter: blur(40px);
+      opacity: 0.45;
+      animation: drift 18s ease-in-out infinite alternate;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .halo.halo-2 {
+      background: radial-gradient(circle, rgba(56,189,248,0.25), transparent 60%);
+      width: 520px;
+      height: 520px;
+      animation-duration: 26s;
+      animation-delay: -8s;
+    }
+
+    @keyframes drift {
+      0%   { transform: translate(-30%, -40%); }
+      50%  { transform: translate(40%, -10%); }
+      100% { transform: translate(10%, 40%); }
+    }
+
+    .shell {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 620px;
+      padding: 24px;
+    }
+
+    .chat-container {
+      background: linear-gradient(135deg, rgba(15,23,42,0.85), rgba(15,23,42,0.95));
+      border-radius: 24px;
+      border: 1px solid rgba(148,163,184,0.35);
+      box-shadow:
+        0 0 0 1px rgba(15,23,42,0.8),
+        0 24px 70px rgba(0,0,0,0.75);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      backdrop-filter: blur(18px);
+      position: relative;
+    }
+
+    .chat-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: radial-gradient(circle at top left, rgba(34,197,94,0.18), transparent 60%);
+    }
+
+    .chat-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-dot {
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.4);
+      background: radial-gradient(circle at 30% 30%, var(--accent), #111827);
+      box-shadow: 0 0 14px rgba(34,197,94,0.7);
+    }
+
+    .chat-header-title {
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #e5e7eb;
+    }
+
+    .chat-header-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .status-chip {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(52,211,153,0.5);
+      background: rgba(15,23,42,0.9);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 8px rgba(34,197,94,0.7);
+    }
+
+    .chat-messages {
+      padding: 16px 18px;
+      height: 420px;
+      overflow-y: auto;
+      background:
+        radial-gradient(circle at top left, rgba(148,163,184,0.17), transparent 58%),
+        radial-gradient(circle at bottom right, rgba(15,23,42,0.8), rgba(15,23,42,0.95));
+      position: relative;
+    }
+
+    .fade-in {
+      animation: fadeInUp 0.25s ease-out;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message-row {
+      margin-bottom: 10px;
+      display: flex;
+    }
+
+    .message-row.user {
+      justify-content: flex-end;
+    }
+    .message-row.assistant {
+      justify-content: flex-start;
+    }
+
+    .message-bubble {
+      max-width: 78%;
+      padding: 9px 12px;
+      border-radius: 16px;
+      font-size: 13px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      position: relative;
+      border: 1px solid rgba(148,163,184,0.3);
+    }
+
+    .message-row.user .message-bubble {
+      background: radial-gradient(circle at top left, rgba(34,197,94,0.26), var(--user-bubble));
+      color: #e5e7eb;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message-row.assistant .message-bubble {
+      background: linear-gradient(135deg, rgba(15,23,42,0.95), rgba(15,23,42,0.92));
+      color: #e5e7eb;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 0 0 1px rgba(15,23,42,0.9);
+    }
+
+    .tiny-meta {
+      font-size: 10px;
+      color: #6b7280;
+      margin-top: 2px;
+      padding: 0 2px;
+    }
+
+    .tiny-meta span {
+      opacity: 0.85;
+    }
+
+    .chat-footer {
+      border-top: 1px solid var(--border-subtle);
+      background: linear-gradient(180deg, rgba(15,23,42,0.9), rgba(15,23,42,0.98));
+      padding: 8px 10px 9px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chat-input {
+      flex: 1;
+      border-radius: 999px;
+      border: 1px solid rgba(55,65,81,0.9);
+      background: rgba(15,23,42,0.85);
+      padding: 9px 14px;
+      font-size: 13px;
+      outline: none;
+      color: var(--text-main);
+      box-shadow: inset 0 0 0 1px rgba(15,23,42,0.95);
+      transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    }
+    .chat-input::placeholder {
+      color: var(--text-muted);
+    }
+    .chat-input:focus {
+      border-color: var(--accent-strong);
+      box-shadow: 0 0 0 1px rgba(34,197,94,0.4);
+      background: rgba(15,23,42,1);
+    }
+
+    .pill-button {
+      border: none;
+      border-radius: 999px;
+      height: 34px;
+      padding: 0 14px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.1s, transform 0.05s, box-shadow 0.1s, opacity 0.1s;
+      white-space: nowrap;
+    }
+
+    .send-button {
+      background: linear-gradient(135deg, var(--accent), #16a34a);
+      color: #020617;
+      box-shadow: 0 0 0 1px rgba(22,163,74,0.8), 0 10px 25px rgba(16,185,129,0.52);
+    }
+    .send-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 30px rgba(16,185,129,0.7);
+    }
+    .send-button:active {
+      transform: translateY(0);
+      box-shadow: 0 4px 12px rgba(16,185,129,0.7);
+    }
+    .send-button[disabled] {
+      opacity: 0.55;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .voice-button {
+      width: 36px;
+      padding: 0;
+      background: radial-gradient(circle at 30% 20%, #38bdf8, #0f172a);
+      border: 1px solid rgba(56,189,248,0.7);
+      color: #e5e7eb;
+      box-shadow: 0 0 16px rgba(56,189,248,0.6);
+      font-size: 16px;
+    }
+    .voice-button.listening {
+      background: radial-gradient(circle at 30% 20%, #fb7185, #111827);
+      border-color: rgba(248,113,113,0.9);
+      box-shadow: 0 0 20px rgba(248,113,113,0.8);
+    }
+    .voice-button[disabled] {
+      opacity: 0.35;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .foot-note {
+      font-size: 10px;
+      color: var(--text-muted);
+      padding: 0 4px 2px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .foot-note code {
+      background: rgba(15,23,42,0.9);
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(55,65,81,0.9);
+      font-size: 10px;
+      color: var(--accent-strong);
+    }
+
+    @media (max-width: 640px) {
+      .shell {
+        padding: 12px;
+      }
+      .chat-container {
+        border-radius: 18px;
+      }
+      .chat-messages {
+        height: 400px;
+      }
+      .chat-header-title {
+        font-size: 13px;
+      }
+      .chat-header-subtitle {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="halo"></div>
+  <div class="halo halo-2"></div>
+
+  <div class="shell">
+    <div class="chat-container">
+      <div class="chat-header">
+        <div class="chat-header-left">
+          <div class="logo-dot"></div>
+          <div>
+            <div class="chat-header-title">CREDIT CARD ASSISTANT</div>
+            <div class="chat-header-subtitle">Stealth console · GenAI · Text + Voice Input</div>
+          </div>
+        </div>
+        <div class="status-chip" id="status-indicator">
+          <div class="status-dot"></div>
+          <span>online</span>
+        </div>
+      </div>
+
+      <div class="chat-messages" id="chat-messages"></div>
+
+      <div class="chat-footer">
+        <div class="input-row">
+          <input
+            id="chat-input"
+            class="chat-input"
+            type="text"
+            placeholder="Type or use the mic to ask about your card..."
+          />
+          <button id="voice-button" class="pill-button voice-button" title="Toggle voice input">
+            🎙
+          </button>
+          <button id="send-button" class="pill-button send-button">
+            <span>Send</span>
+          </button>
+        </div>
+        <div class="foot-note">
+          <span>Prototype – responses are not spoken aloud.</span>
+          <span>API: <code>POST /api/chat</code></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "http://127.0.0.1:8000/api/chat";
+    const USER_ID = "user_123";
+    const CHANNEL = "web";
+
+    const messagesEl = document.getElementById("chat-messages");
+    const inputEl = document.getElementById("chat-input");
+    const sendBtn = document.getElementById("send-button");
+    const voiceBtn = document.getElementById("voice-button");
+    const statusEl = document.getElementById("status-indicator");
+
+    let chatHistory = [];
+
+    function appendMessage(role, content, meta) {
+      const row = document.createElement("div");
+      row.className = "message-row " + (role === "user" ? "user" : "assistant") + " fade-in";
+
+      const bubble = document.createElement("div");
+      bubble.className = "message-bubble";
+      bubble.textContent = content;
+
+      row.appendChild(bubble);
+      messagesEl.appendChild(row);
+
+      if (meta) {
+        const info = document.createElement("div");
+        info.className = "tiny-meta";
+        info.innerHTML = `<span>${meta}</span>`;
+        messagesEl.appendChild(info);
+      }
+
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    async function sendMessage(textFromVoice) {
+      const text = (textFromVoice !== undefined ? textFromVoice : inputEl.value.trim());
+      if (!text) return;
+
+      appendMessage("user", text);
+      chatHistory.push({ role: "user", content: text });
+      inputEl.value = "";
+
+      sendBtn.disabled = true;
+      inputEl.disabled = true;
+      voiceBtn.disabled = true;
+      statusEl.innerHTML = '<div class="status-dot"></div><span>thinking</span>';
+
+      try {
+        const body = {
+          user_id: USER_ID,
+          channel: CHANNEL,
+          messages: chatHistory
+        };
+
+        const resp = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
+
+        const data = await resp.json();
+        const reply = data.reply || "(No reply field in response)";
+        const source = data.source || "assistant";
+
+        appendMessage("assistant", reply, `source: ${source}`);
+        chatHistory.push({ role: "assistant", content: reply });
+        // NOTE: no text-to-speech here – UI only shows replies, does not speak them.
+      } catch (err) {
+        console.error("Error calling API:", err);
+        appendMessage("assistant", "Something broke talking to the API. Check the server logs.", "error");
+      } finally {
+        sendBtn.disabled = false;
+        inputEl.disabled = false;
+        voiceBtn.disabled = !supportsSpeechRecognition;
+        statusEl.innerHTML = '<div class="status-dot"></div><span>online</span>';
+        inputEl.focus();
+      }
+    }
+
+    sendBtn.addEventListener("click", () => sendMessage());
+
+    inputEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Web Speech API for voice INPUT only
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null;
+    let isListening = false;
+    const supportsSpeechRecognition = !!SpeechRecognition;
+
+    if (!supportsSpeechRecognition) {
+      voiceBtn.disabled = true;
+      voiceBtn.title = "Speech recognition not supported in this browser";
+    } else {
+      recognition = new SpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        isListening = true;
+        voiceBtn.classList.add("listening");
+        statusEl.innerHTML = '<div class="status-dot"></div><span>listening</span>';
+      };
+
+      recognition.onend = () => {
+        isListening = false;
+        voiceBtn.classList.remove("listening");
+        statusEl.innerHTML = '<div class="status-dot"></div><span>online</span>';
+      };
+
+      recognition.onerror = (event) => {
+        console.error("Speech recognition error:", event.error);
+        voiceBtn.classList.remove("listening");
+        statusEl.innerHTML = '<div class="status-dot" style="background:#f97373;box-shadow:0 0 8px rgba(248,113,113,0.8)"></div><span>mic error</span>';
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        // Directly send the recognized speech as the user's message
+        sendMessage(transcript);
+      };
+
+      voiceBtn.addEventListener("click", () => {
+        if (!recognition) return;
+        if (!isListening) recognition.start();
+        else recognition.stop();
+      });
+    }
+
+    // Initial greeting
+    appendMessage(
+      "assistant",
+      "booting credit-card-assistant…\n\nYou can type or speak.\nTry:\n• \"What is my outstanding amount?\"\n• \"Block my card\"\n• \"Why do we use credit cards?\"",
+      "gen: system"
+    );
+  </script>
+</body>
+</html>
