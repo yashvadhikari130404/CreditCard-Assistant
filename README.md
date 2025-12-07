@@ -7,3 +7,4 @@ In terminal ,
 3. pip install -r requirements.txt
 4. set HF_TOKEN="__________"
 5. uvicorn app:app --reload
+
